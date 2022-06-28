@@ -1,31 +1,57 @@
---- OLD SCRIPT
---- 0.1V
+--[[
+██████╗░██╗░░░██╗██████╗░░█████╗░░██████╗░██████╗
+██╔══██╗╚██╗░██╔╝██╔══██╗██╔══██╗██╔════╝██╔════╝
+██████╦╝░╚████╔╝░██████╔╝███████║╚█████╗░╚█████╗░
+██╔══██╗░░╚██╔╝░░██╔═══╝░██╔══██║░╚═══██╗░╚═══██╗
+██████╦╝░░░██║░░░██║░░░░░██║░░██║██████╔╝██████╔╝
+╚═════╝░░░░╚═╝░░░╚═╝░░░░░╚═╝░░╚═╝╚═════╝░╚═════╝░
+~ 0.2v
+--]]
 
----// Services \\---
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local Players     = game:GetService("Workspace").Players
+--// PlayerInfo
+local Players          = game:GetService("Players")
+local WorkspacePlayers = game:GetService("Workspace").Players
+local LocalPlayer      = Players.LocalPlayer
 
-function BypassDeadAntiCheat()
-    -- Find LocalPlayer
-    for i,v in pairs(Players:GetChildren()) do
-        -- LocalPlayer check
-        if v.Name == LocalPlayer.Name then
-            -- Loop through players children
-            for i,e in pairs(v:GetChildren()) do
-                -- Check for script
-                if e:IsA("Script") then
-                    -- Loop through scripts children
-                    for i,n in pairs(e:GetChildren()) do
-                        -- If it contains a localscript its the anticheat shit
-                        if n.Name == "LocalScript" then
-                            e:Destroy()
-                            print("[AntiCheat] Removed!")
-                        end
-                    end
-                end
+local Character     = LocalPlayer.Character
+
+--// Find the AntiCheat
+function FindAC(characterObject)
+    for i,obj in pairs(characterObject:GetChildren()) do
+        if obj:IsA("Script") and not obj:IsA("LocalScript") then
+            if #obj:GetChildren() > 0 then
+                return obj
             end
         end
     end
 end
 
-BypassDeadAntiCheat()
+function DeleteAC(characterObject)
+    local AC = FindAC(characterObject)
+    if AC then
+        AC:Destroy()
+    else
+        AC = FindAC(characterObject)
+    end
+    print("[Console] 'AC' Deleted.")
+end
+
+--// Delete first load.
+DeleteAC(Character)
+
+--// First time loading in.
+WorkspacePlayers.ChildAdded:Connect(function(object)
+    if object.Name == LocalPlayer.Name then
+        local FullLoad = object:WaitForChild("FULLY_LOADED_CHAR")
+        DeleteAC(object)
+    end
+end)
+
+--// LocalPlayer Character respawned or spawned.
+LocalPlayer.CharacterAdded:Connect(function(character)
+    -- print("LocalPlayer loaded!")
+    local Hum = character:FindFirstChild("Humanoid")
+    wait(2)
+    DeleteAC(character)
+end)
+
